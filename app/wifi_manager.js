@@ -111,6 +111,17 @@ module.exports = function() {
         ], callback);
     },
 
+    _shutdown_wireless_network = function(wlan_iface, callback) {
+        async.series([
+            function down(next_step) {
+                exec("sudo ifconfig " + wlan_iface + " down", function(error, stdout, stderr) {
+                    if (!error) console.log("ifconfig " + wlan_iface + " down successful.");
+                    next_step();
+                });
+            },
+        ], callback);
+    },
+
     // Wifi related functions
     _is_wifi_enabled_sync = function(info) {
         // If we are not an AP, and we have a valid
@@ -252,7 +263,6 @@ module.exports = function() {
             }
 
             async.series([
-            
 				
 				//Add new network
 				function update_wpa_supplicant(next_step) {
@@ -321,6 +331,7 @@ module.exports = function() {
     return {
         get_wifi_info:           _get_wifi_info,
         reboot_wireless_network: _reboot_wireless_network,
+        shutdown_wireless_network: _shutdown_wireless_network,
 
         is_wifi_enabled:         _is_wifi_enabled,
         is_wifi_enabled_sync:    _is_wifi_enabled_sync,

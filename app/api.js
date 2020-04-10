@@ -65,10 +65,35 @@ module.exports = function(wifi_manager, callback) {
                     console.log("... AP mode reset");
                 });
                 response.redirect("/");
+                return;
             }
             // Success! - exit
-            console.log("Wifi Enabled! - Exiting");
-            process.exit(0);
+            console.log("Wifi Enabled! - Standing by.");
+            response.redirect("/");
+        });
+    });
+
+    app.post("/api/disable_wifi", function(request, response) {
+        wifi_manager.shutdown_wireless_network("wlan0", function(error) {
+            if (error) {
+                console.log("Disable Wifi ERROR: " + error);
+                response.status(500).send();
+                return;
+            }
+            console.log("Wifi Disabled! - Standing by.");
+            response.status(200).send();
+        });
+    });
+
+    app.post("api/enable_ap", function(request, response) {
+        wifi_manager.enable_ap_mode(config.access_point.ssid, function(error) {
+            console.log("Starting AP mode: " + error);
+            if (error) {
+
+            }
+            else {
+
+            }
         });
     });
 
