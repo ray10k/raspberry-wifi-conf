@@ -57,6 +57,7 @@ module.exports = function(wifi_manager, callback) {
     });
 
     app.post("/api/enable_wifi", function(request, response) {
+        console.log("Server post: enable_wifi");
         var conn_info = {
             wifi_ssid:      request.body.wifi_ssid,
             wifi_passcode:  request.body.wifi_passcode,
@@ -79,6 +80,7 @@ module.exports = function(wifi_manager, callback) {
     });
 
     app.post("/api/disable_wifi", function(request, response) {
+        console.log('Server post: disable_wifi');
         wifi_manager.shutdown_wireless_network("wlan0", function(error) {
             console.log("Wifi Disabled! - Standing by.");
             log_error_send_success_with("Wifi enabled",error,response);
@@ -86,6 +88,7 @@ module.exports = function(wifi_manager, callback) {
     });
 
     app.post("api/enable_ap", function(request, response) {
+        console.log('Server post: enable_ap');
         wifi_manager.enable_ap_mode(config.access_point.ssid, function(error) {
             console.log("Starting AP mode: " + error);
             log_error_send_success_with("AP enabled",error,response);

@@ -29,9 +29,9 @@ async.series([
     function disable_wifi(next_step) {
         wifi_manager.shutdown_wireless_network(config.access_point.wifi_interface, function(error) {
             if(error) {
-                console.log("... AP Enable ERROR: " + error);
+                console.log("... wifi disable ERROR: " + error);
             } else {
-                console.log("... AP Enable Success!");
+                console.log("... successfully disabled wifi!");
             }
             next_step(error);
         });
