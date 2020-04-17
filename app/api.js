@@ -49,6 +49,13 @@ module.exports = function(wifi_manager, callback) {
         });
     });
 
+    app.get("/api/wifi_info", function(request, response) {
+        console.log("Server got /wifi_info");
+        wifi_manager.get_wifi_info(function(error,result) {
+            log_error_send_success_with(result,error,response);
+        });
+    });
+
     app.post("/api/enable_wifi", function(request, response) {
         var conn_info = {
             wifi_ssid:      request.body.wifi_ssid,
