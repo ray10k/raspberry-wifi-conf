@@ -87,7 +87,7 @@ module.exports = function(wifi_manager, callback) {
         });
     });
 
-    app.get("api/enable_ap", function(request, response) {
+    app.get("/api/enable_ap", function(request, response) {
         console.log('Server got enable_ap');
         wifi_manager.enable_ap_mode(config.access_point.ssid, function(error) {
             console.log("Starting AP mode: " + error);
