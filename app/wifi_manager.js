@@ -190,12 +190,15 @@ module.exports = function() {
             context["enable_ap"] = true;
             context["wifi_driver_type"] = config.wifi_driver_type;
 
+            console.log(`starting ap mode with context:\n${JSON.stringify(context)}`);
+
             // Here we need to actually follow the steps to enable the ap
             async.series([
 
                 // Enable the access point ip and netmask + static
                 // DHCP for the wlan0 interface
                 function update_interfaces(next_step) {
+                    console.log('writing dhcpcd config...');
                     write_template_to_file(
                         "./assets/etc/dhcpcd/dhcpcd.ap.template",
                         "/etc/dhcpcd.conf",
@@ -205,6 +208,7 @@ module.exports = function() {
 
                 // Enable the interface in the dhcp server
                 function update_dhcp_interface(next_step) {
+                    console.log('writing dnsmasq config...')
                     write_template_to_file(
                         "./assets/etc/dnsmasq/dnsmasq.ap.template",
                         "/etc/dnsmasq.conf",
@@ -213,6 +217,7 @@ module.exports = function() {
 
                 // Enable hostapd.conf file
                 function update_hostapd_conf(next_step) {
+                    console.log('writing hostapd config...')
                     write_template_to_file(
                         "./assets/etc/hostapd/hostapd.conf.template",
                         "/etc/hostapd/hostapd.conf",
@@ -220,6 +225,7 @@ module.exports = function() {
                 },
 
                 function restart_dhcp_service(next_step) {
+                    console.log('restarting dhcpcd...');
                     exec("sudo systemctl restart dhcpcd", function(error, stdout, stderr) {
                         if (!error) console.log("... dhcpcd server restarted!");
                         else console.log("... dhcpcd server failed! - " + stdout);
@@ -229,18 +235,22 @@ module.exports = function() {
 
                 
                 function reboot_network_interfaces(next_step) {
+                    console.log('rebooting network interface...')
                     _reboot_wireless_network(config.wifi_interface, next_step);
                 },
 
                 function restart_hostapd_service(next_step) {
+                    console.log('restarting hostapd...');
                     exec("sudo systemctl restart hostapd", function(error, stdout, stderr) {
                         //console.log(stdout);
                         if (!error) console.log("... hostapd restarted!");
+                        else console.log("... hostapd restart failed!");
                         next_step();
                     });
                 },
                 
                 function restart_dnsmasq_service(next_step) {
+                    console.log('restarting dnsmasq...');
                     exec("sudo systemctl restart dnsmasq", function(error, stdout, stderr) {
                         if (!error) console.log("... dnsmasq server restarted!");
                         else console.log("... dnsmasq server failed! - " + stdout);
@@ -264,10 +274,13 @@ module.exports = function() {
                 return callback(null);
             }
 
+            console.log(`starting wifi with context:\n${JSON.stringify(connection_info)}`);
+
             async.series([
 				
 				//Add new network
 				function update_wpa_supplicant(next_step) {
+                    console.log('writing wpa_supplicant configuration...');
                     write_template_to_file(
                         "./assets/etc/wpa_supplicant/wpa_supplicant.conf.template",
                         "/etc/wpa_supplicant/wpa_supplicant.conf",
@@ -275,6 +288,7 @@ module.exports = function() {
 				},
 
                 function update_interfaces(next_step) {
+                    console.log('writing dhcpcd configuration...');
                     write_template_to_file(
                         "./assets/etc/dhcpcd/dhcpcd.station.template",
                         "/etc/dhcpcd.conf",
@@ -283,6 +297,7 @@ module.exports = function() {
 
                 // Enable the interface in the dhcp server
                 function update_dhcp_interface(next_step) {
+                    console.log('writing dnsmasq configuration...');
                     write_template_to_file(
                         "./assets/etc/dnsmasq/dnsmasq.station.template",
                         "/etc/dnsmasq.conf",
@@ -291,6 +306,7 @@ module.exports = function() {
 
                 // Enable hostapd.conf file
                 function update_hostapd_conf(next_step) {
+                    console.log('writing hostapd configuration...');
                     write_template_to_file(
                         "./assets/etc/hostapd/hostapd.conf.station.template",
                         "/etc/hostapd/hostapd.conf",
@@ -298,6 +314,7 @@ module.exports = function() {
                 },
 
 				function restart_dnsmasq_service(next_step) {
+                    console.log('stopping dnsmasq service...');
                     exec("sudo systemctl stop dnsmasq", function(error, stdout, stderr) {
                         if (!error) console.log("... dnsmasq server stopped!");
                         else console.log("... dnsmasq server failed! - " + stdout);
@@ -306,14 +323,15 @@ module.exports = function() {
                 },
                 
                 function restart_hostapd_service(next_step) {
+                    console.log('stopping hostapd service...');
                     exec("sudo systemctl stop hostapd", function(error, stdout, stderr) {
-                        //console.log(stdout);
                         if (!error) console.log("... hostapd stopped!");
                         next_step();
                     });
                 },
                 
                 function restart_dhcp_service(next_step) {
+                    console.log('restarting dhcpcd service...');
                     exec("sudo systemctl restart dhcpcd", function(error, stdout, stderr) {
                         if (!error) console.log("... dhcpcd server restarted!");
                         else console.log("... dhcpcd server failed! - " + stdout);
@@ -322,6 +340,7 @@ module.exports = function() {
                 },
 
                 function reboot_network_interfaces(next_step) {
+                    console.log('rebooting wifi...');
                     _reboot_wireless_network(config.wifi_interface, next_step);
                 },
 
