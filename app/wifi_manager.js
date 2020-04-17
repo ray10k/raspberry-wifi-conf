@@ -39,6 +39,8 @@ module.exports = function() {
         }
     });
 
+    console.log(JSON.stringify(config,{},1));
+
     // Hack: this just assumes that the outbound interface will be "wlan0"
 
     // Define some globals
