@@ -24,7 +24,7 @@ async.series([
             next_step(error);
         });
     },
-
+/*
     // 2. Disable wifi entirely.
     function disable_wifi(next_step) {
         wifi_manager.shutdown_wireless_network(config.access_point.wifi_interface, function(error) {
@@ -36,7 +36,7 @@ async.series([
             next_step(error);
         });
     },
-
+*/
     // 3. Host HTTP server, the "api.js" file contains all the needed logic to
     //    get a basic express server up. It uses a small angular application 
     //    which allows us to choose the wifi of our choosing.
