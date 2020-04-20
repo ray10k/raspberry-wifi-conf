@@ -56,6 +56,13 @@ module.exports = function(wifi_manager, callback) {
         });
     });
 
+    app.get("/api/enable_wifi", function(request, response) {
+        console.log("Server got /enable_wifi");
+        wifi_manager.reboot_wireless_network(config.access_point.wifi_interface, function(error) {
+            log_error_send_success_with("wifi enabled",error,response);
+        });
+    });
+
     app.post("/api/enable_wifi", function(request, response) {
         console.log("Server post: enable_wifi");
         var conn_info = {
@@ -75,7 +82,7 @@ module.exports = function(wifi_manager, callback) {
             }
             // Success! - exit
             console.log("Wifi Enabled! - Standing by.");
-            log_error_send_success_with("AP enabled",error,response);
+            log_error_send_success_with("Wifi enabled",error,response);
         });
     });
 
