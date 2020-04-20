@@ -58,7 +58,7 @@ module.exports = function(wifi_manager, callback) {
 
     app.get("/api/enable_wifi", function(request, response) {
         console.log("Server got /enable_wifi");
-        wifi_manager.reboot_wireless_network(config.access_point.wifi_interface, function(error) {
+        wifi_manager.enable_wifi_mode({}, function(error) {
             log_error_send_success_with("wifi enabled",error,response);
         });
     });
@@ -100,6 +100,11 @@ module.exports = function(wifi_manager, callback) {
             console.log("Starting AP mode: " + error);
             log_error_send_success_with("AP enabled",error,response);
         });
+    });
+
+    app.get("/api/disable_ap", function(request, response) {
+        console.log('Server got disable_ap');
+
     });
 
     // Listen on our server

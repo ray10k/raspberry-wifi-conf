@@ -2,13 +2,20 @@ var _       = require("underscore")._,
     async   = require("async"),
     fs      = require("fs"),
     exec    = require("child_process").exec,
-    config  = require("../config.json");
+    config  = require("../config.json"),
+    readline= require("readline");
 
 // Better template format
 _.templateSettings = {
     interpolate: /\{\{(.+?)\}\}/g,
     evaluate :   /\{\[([\s\S]+?)\]\}/g
 };
+
+const network_block = "\nnetwork={\n"+
+    "\tssid={{ wifi_ssid }}\n"+
+    "\tpsk={{ wifi_passcode }}\n"+
+    "\tkey_mgmt=WPA-PSK\n"+
+"}\n";
 
 // Helper function to write a given template to a file based on a given
 // context
@@ -276,15 +283,72 @@ module.exports = function() {
 
             console.log(`starting wifi with context:\n${JSON.stringify(connection_info)}`);
 
-            async.series([
-				
+            async.series([	
 				//Add new network
 				function update_wpa_supplicant(next_step) {
                     console.log('writing wpa_supplicant configuration...');
+                    if (typeof connection_info.wifi_ssid == 'undefined' || connection_info.wifi_ssid == "")
+                    {
+                        //Don't change WPA supplicant config.
+                        next_step();
+                    }
+                    //First: If no WPA supplicant configuration exists, copy in the default template.
+                    else if (!fs.existsSync("/etc/wpa_supplicant/wpa_supplicant.conf"))
+                    {
                     write_template_to_file(
                         "./assets/etc/wpa_supplicant/wpa_supplicant.conf.template",
                         "/etc/wpa_supplicant/wpa_supplicant.conf",
                         connection_info, next_step);
+                    }
+                    else
+                    {
+                        //Second: WPA supplicant configuration exists. Search the file for the given
+                        //ssid.
+                        let exists = false;
+                        let lines = [];
+                        let reader = readline.createInterface(
+                            {input:fs.createReadStream("/etc/wpa_supplicant/wpa_supplicant.conf")}
+                        );
+                        reader.on('line', function(line) {
+                            lines.push(line);
+                            if (line.includes('ssid='+connection_info.wifi_ssid))
+                            {
+                                exists = true;
+                            }
+                        });
+
+                        reader.on('close', function() {
+                            if (exists)
+                            {
+                                //Third: The ssid already exists in the file. Update the passkey.
+                                //Note: will break if the passkey isn't in the line immediately
+                                //after the one with the ssid.
+                                let i = -1;
+                                lines.forEach((value,index) => {
+                                    if (value.includes('ssid='+connection_info.wifi_ssid))
+                                    {
+                                        i = index + 1;
+                                    }
+                                });
+                                lines[i] = "\tpsk="+connection_info.wifi_passcode;
+                                let stream = fs.createWriteStream("/etc/wpa_supplicant/wpa_supplicant.conf");
+                                lines.forEach((line) => {
+                                    stream.write(line);
+                                });
+                                stream.close();
+                            }
+                            else
+                            {
+                                //Fourth: the ssid doesn't exist in the file yet. Fill in a new
+                                //network block, and append it to the end of the file.
+                                let to_write = _.template(network_block,connection_info);
+                                let stream = fs.createWriteStream("/etc/wpa_supplicant/wpa_supplicant.conf",{flags:"a"});
+                                stream.write(to_write);
+                                stream.close();
+                            }
+                            next_step();
+                        });
+                    }
 				},
 
                 function update_interfaces(next_step) {
