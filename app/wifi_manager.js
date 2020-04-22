@@ -341,9 +341,9 @@ module.exports = function() {
                             {
                                 //Fourth: the ssid doesn't exist in the file yet. Fill in a new
                                 //network block, and append it to the end of the file.
-                                let to_write = _.template(network_block,connection_info);
+                                let to_write = _.template(network_block);
                                 let stream = fs.createWriteStream("/etc/wpa_supplicant/wpa_supplicant.conf",{flags:"a"});
-                                stream.write(to_write);
+                                stream.write(to_write(connection_info));
                                 stream.close();
                             }
                             next_step();
