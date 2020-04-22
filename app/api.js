@@ -86,6 +86,15 @@ module.exports = function(wifi_manager, callback) {
         });
     });
 
+    app.get("/api/wifi_connected", function(request, response) {
+        console.log("Server got /wifi_connected");
+        wifi_manager.is_wifi_enabled(function(error,result)
+        {
+            let response_obj = {connected:(result !== null), address:result};
+            log_error_send_success_with(response_obj,error,response);
+        })
+    })
+
     app.get("/api/disable_wifi", function(request, response) {
         console.log('Server got disable_wifi');
         wifi_manager.shutdown_wireless_network("wlan0", function(error) {
