@@ -102,11 +102,6 @@ module.exports = function(wifi_manager, callback) {
         });
     });
 
-    app.get("/api/disable_ap", function(request, response) {
-        console.log('Server got disable_ap');
-
-    });
-
     // Listen on our server
     app.listen(config.server.port);
 }

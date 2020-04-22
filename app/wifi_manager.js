@@ -104,7 +104,7 @@ module.exports = function() {
         });
     },
 
-    _reboot_wireless_network = function(wlan_iface, callback) {
+    _reboot_wireless_network = function(wlan_iface, set_address, callback) {
         async.series([
             function down(next_step) {
                 exec("sudo ifconfig " + wlan_iface + " down", function(error, stdout, stderr) {
@@ -113,11 +113,22 @@ module.exports = function() {
                 });
             },
             function up(next_step) {
-                exec("sudo ifconfig " + wlan_iface + " inet " + config.access_point.ip_addr + " up"
-                , function(error, stdout, stderr) {
-                    if (!error) console.log("ifconfig " + wlan_iface + " up successful...");
-                    next_step();
-                });
+                if (set_address)
+                {
+                    exec("sudo ifconfig " + wlan_iface + " inet " + config.access_point.ip_addr + " up"
+                    , function(error, stdout, stderr) {
+                        if (!error) console.log("ifconfig " + wlan_iface + " up successful (with address)...");
+                        next_step();
+                    });
+                }
+                else
+                {
+                    exec("sudo ifconfig " + wlan_iface + " up"
+                    , function(error, stdout, stderr) {
+                        if (!error) console.log("ifconfig " + wlan_iface + " up successful (no address)...");
+                        next_step();
+                    });
+                }
             },
         ], callback);
     },
@@ -245,7 +256,7 @@ module.exports = function() {
                 
                 function reboot_network_interfaces(next_step) {
                     console.log('rebooting network interface...')
-                    _reboot_wireless_network(config.wifi_interface, next_step);
+                    _reboot_wireless_network(config.wifi_interface, true, next_step);
                 },
 
                 function restart_hostapd_service(next_step) {
@@ -406,7 +417,7 @@ module.exports = function() {
 
                 function reboot_network_interfaces(next_step) {
                     console.log('rebooting network interface...')
-                    _reboot_wireless_network(config.wifi_interface, next_step);
+                    _reboot_wireless_network(config.wifi_interface, false, next_step);
                 },
 
             ], callback);
