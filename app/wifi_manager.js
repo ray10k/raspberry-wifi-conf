@@ -113,7 +113,7 @@ module.exports = function() {
                 });
             },
             function up(next_step) {
-                exec("sudo ifconfig " + wlan_iface + " up inet " + config.access_point.ip_addr
+                exec("sudo ifconfig " + wlan_iface + " inet " + config.access_point.ip_addr + " up"
                 , function(error, stdout, stderr) {
                     if (!error) console.log("ifconfig " + wlan_iface + " up successful...");
                     next_step();
