@@ -145,6 +145,7 @@ module.exports = function() {
     },
 
     // Wifi related functions
+    // Honestly, this should be called something like "Get_wifi_ip", but oh well.
     _is_wifi_enabled_sync = function(info) {
         // If we are not an AP, and we have a valid
         // inet_addr - wifi is enabled!
