@@ -284,8 +284,14 @@ module.exports = function() {
 
             console.log(`starting wifi with context:\n${JSON.stringify(connection_info)}`);
 
-            async.series([	
-				//Add new network
+            async.series([
+                function down(next_step) {
+                    console.log('taking down network adapter')
+                    exec("sudo ifconfig " + config.access_point.wifi_interface + " down", function(error, stdout, stderr) {
+                        if (!error) console.log("ifconfig " + config.access_point.wifi_interface + " down successful...");
+                        next_step();
+                    });
+                },
 				function update_wpa_supplicant(next_step) {
                     console.log('writing wpa_supplicant configuration...');
                     if (typeof connection_info.wifi_ssid == 'undefined' || connection_info.wifi_ssid == "")
@@ -404,9 +410,22 @@ module.exports = function() {
                     });
                 },
 
-                function reboot_network_interfaces(next_step) {
-                    console.log('rebooting wifi...');
-                    _reboot_wireless_network(config.wifi_interface, next_step);
+                function up(next_step) {
+                    console.log('Bringing up network adapter...');
+                    exec("sudo ifconfig " 
+                        + config.access_point.wifi_interface 
+                        + " up inet "
+                        + config.access_point.ip_addr, function(error, stdout, stderr) {
+                        if (!error) 
+                        {
+                            console.log("ifconfig "
+                            + config.access_point.wifi_interface 
+                            + " up inet "
+                            + config.access_point.ip_addr
+                            + " successful." );
+                        }
+                        next_step();
+                    });
                 },
 
             ], callback);
