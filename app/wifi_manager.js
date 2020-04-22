@@ -424,6 +424,10 @@ module.exports = function() {
                             + config.access_point.ip_addr
                             + " successful." );
                         }
+                        else
+                        {
+                            console.error("ERROR: "+error);
+                        }
                         next_step();
                     });
                 },
