@@ -12,8 +12,8 @@ _.templateSettings = {
 };
 
 const network_block = "\nnetwork={\n"+
-    "\tssid={{ wifi_ssid }}\n"+
-    "\tpsk={{ wifi_passcode }}\n"+
+    "\tssid=\"{{ wifi_ssid }}\"\n"+
+    "\tpsk=\"{{ wifi_passcode }}\"\n"+
     "\tkey_mgmt=WPA-PSK\n"+
 "}\n";
 
@@ -311,7 +311,7 @@ module.exports = function() {
                         );
                         reader.on('line', function(line) {
                             lines.push(line);
-                            if (line.includes('ssid='+connection_info.wifi_ssid))
+                            if (line.includes('ssid="'+connection_info.wifi_ssid+'"'))
                             {
                                 exists = true;
                             }
@@ -325,7 +325,7 @@ module.exports = function() {
                                 //after the one with the ssid.
                                 let i = -1;
                                 lines.forEach((value,index) => {
-                                    if (value.includes('ssid='+connection_info.wifi_ssid))
+                                    if (value.includes('ssid="'+connection_info.wifi_ssid+'"'))
                                     {
                                         i = index + 1;
                                     }
