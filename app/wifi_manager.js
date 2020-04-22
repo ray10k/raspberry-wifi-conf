@@ -4,6 +4,7 @@ var _       = require("underscore")._,
     exec    = require("child_process").exec,
     config  = require("../config.json"),
     readline= require("readline");
+const NEWLINE = require('os').EOL;
 
 // Better template format
 _.templateSettings = {
@@ -11,11 +12,11 @@ _.templateSettings = {
     evaluate :   /\{\[([\s\S]+?)\]\}/g
 };
 
-const network_block = "\nnetwork={\n"+
+const network_block = _.template("\nnetwork={\n"+
     "\tssid=\"{{ wifi_ssid }}\"\n"+
     "\tpsk=\"{{ wifi_passcode }}\"\n"+
     "\tkey_mgmt=WPA-PSK\n"+
-"}\n";
+"}\n");
 
 // Helper function to write a given template to a file based on a given
 // context
@@ -330,10 +331,11 @@ module.exports = function() {
                                         i = index + 1;
                                     }
                                 });
-                                lines[i] = "\tpsk="+connection_info.wifi_passcode;
+                                lines[i] = "\tpsk=\""+connection_info.wifi_passcode+'"';
                                 let stream = fs.createWriteStream("/etc/wpa_supplicant/wpa_supplicant.conf");
                                 lines.forEach((line) => {
                                     stream.write(line);
+                                    stream.write(NEWLINE);
                                 });
                                 stream.close();
                             }
@@ -341,9 +343,8 @@ module.exports = function() {
                             {
                                 //Fourth: the ssid doesn't exist in the file yet. Fill in a new
                                 //network block, and append it to the end of the file.
-                                let to_write = _.template(network_block);
                                 let stream = fs.createWriteStream("/etc/wpa_supplicant/wpa_supplicant.conf",{flags:"a"});
-                                stream.write(to_write(connection_info));
+                                stream.write(network_block(connection_info));
                                 stream.close();
                             }
                             next_step();
