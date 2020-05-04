@@ -1,8 +1,8 @@
 interface={{ wifi_interface }}      # Use the require wireless interface - usually wlan0
   dhcp-range={{ subnet_range_start }},{{ subnet_range_end }},{{ netmask }},24h
-  address=/clients3.google.com/70.65.73.82
-  address=/clients.l.google.com/70.65.73.82
+  address=/clients3.google.com/70.65.73.82 #Dummy redirects to fool android captive portal checks.
+  address=/clients.l.google.com/70.65.73.82 #The address is simply the ascii codes for 'FAIR'
   address=/connectivitycheck.android.com/70.65.73.82
   address=/connectivitycheck.gstatic.com/70.65.73.82
-  address=/play.googleapis.com/70.65.73.82 #Dummy redirects to fool android captive portal checks.
+  address=/play.googleapis.com/70.65.73.82 
   address=/#/{{ ip_addr }}
