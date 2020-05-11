@@ -70,6 +70,15 @@ module.exports = function(wifi_manager, callback) {
             wifi_passcode:  request.body.wifi_passcode,
         };
 
+        if (typeof(request.body.force) != 'undefined')
+        {
+            conn_info["force"] = request.body.force;
+        }
+        else
+        {
+            conn_info["force"] = false;
+        }
+
         // TODO: If wifi did not come up correctly, it should fail
         // currently we ignore ifup failures.
         wifi_manager.enable_wifi_mode(conn_info, function(error) {

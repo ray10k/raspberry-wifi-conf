@@ -303,7 +303,7 @@ module.exports = function() {
         _is_wifi_enabled(function(error, result_ip) {
             if (error) return callback(error);
 
-            if (result_ip) {
+            if (result_ip && !connection_info.force) {
                 console.log("\nWifi connection is enabled with IP: " + result_ip);
                 return callback(null);
             }
