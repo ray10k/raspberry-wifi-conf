@@ -301,14 +301,15 @@ module.exports = function() {
     _enable_wifi_mode = function(connection_info, callback) {
 
         _is_wifi_enabled(function(error, result_ip) {
+
+            console.log(`starting wifi with context:\n${JSON.stringify(connection_info)}`);
+
             if (error) return callback(error);
 
             if (result_ip && !connection_info.force) {
                 console.log("\nWifi connection is enabled with IP: " + result_ip);
                 return callback(null);
             }
-
-            console.log(`starting wifi with context:\n${JSON.stringify(connection_info)}`);
 
             async.series([
 				function update_wpa_supplicant(next_step) {
