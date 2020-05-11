@@ -144,6 +144,19 @@ module.exports = function() {
         ], callback);
     },
 
+    _wireless_interface_existst = function(wlan_iface, callback) {
+        async.series([
+            function check(next_step) {
+                exec("sudo ifconfig", function(error, stdout, stderr) {
+                    var out_string = stdout.toString('utf-8');
+                    next_step(error,out_string.includes(wlan_iface));
+                })
+            }
+        ], function done(err, results) {
+            callback(err,results[0]);
+        });
+    }
+
     // Wifi related functions
     // Honestly, this should be called something like "Get_wifi_ip", but oh well.
     _is_wifi_enabled_sync = function(info) {
@@ -430,6 +443,7 @@ module.exports = function() {
         get_wifi_info:           _get_wifi_info,
         reboot_wireless_network: _reboot_wireless_network,
         shutdown_wireless_network: _shutdown_wireless_network,
+        wireless_interface_exists: _wireless_interface_existst,
 
         is_wifi_enabled:         _is_wifi_enabled,
         is_wifi_enabled_sync:    _is_wifi_enabled_sync,

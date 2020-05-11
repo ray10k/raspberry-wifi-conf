@@ -59,7 +59,7 @@ module.exports = function(wifi_manager, callback) {
     app.get("/api/enable_wifi", function(request, response) {
         console.log("Server got /enable_wifi");
         wifi_manager.enable_wifi_mode({}, function(error) {
-            log_error_send_success_with("wifi enabled",error,response);
+            log_error_send_success_with({result:"wifi enabled"},error,response);
         });
     });
 
@@ -82,7 +82,7 @@ module.exports = function(wifi_manager, callback) {
             }
             // Success! - exit
             console.log("Wifi Enabled! - Standing by.");
-            log_error_send_success_with("Wifi enabled",error,response);
+            log_error_send_success_with({result:"Wifi enabled"},error,response);
         });
     });
 
@@ -99,7 +99,7 @@ module.exports = function(wifi_manager, callback) {
         console.log('Server got disable_wifi');
         wifi_manager.shutdown_wireless_network("wlan0", function(error) {
             console.log("Wifi Disabled! - Standing by.");
-            log_error_send_success_with("Wifi enabled",error,response);
+            log_error_send_success_with({result:"Wifi enabled"},error,response);
         });
     });
 
@@ -107,9 +107,16 @@ module.exports = function(wifi_manager, callback) {
         console.log('Server got enable_ap');
         wifi_manager.enable_ap_mode(config.access_point.ssid, function(error) {
             console.log("Starting AP mode: " + error);
-            log_error_send_success_with("AP enabled",error,response);
+            log_error_send_success_with({result:"AP enabled"},error,response);
         });
     });
+
+    app.get("/api/wlan0_exists", function(request, response) {
+        console.log('Server got wlan0_exists');
+        wifi_manager.wireless_interface_exists("wlan0", function(error,result) {
+            log_error_send_success_with({exists:result},error,response)
+        })
+    })
 
     // Listen on our server
     app.listen(config.server.port);
