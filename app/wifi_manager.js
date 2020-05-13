@@ -450,6 +450,10 @@ module.exports = function() {
         console.log("Listing saved wifi networks.");
 
         var retval = [];
+        if (!fs.existsSync("/etc/wpa_supplicant/wpa_supplicant.conf"))
+        {
+            callback(null,retval);
+        }
         var reader = readline.createInterface(
             {input:fs.createReadStream("/etc/wpa_supplicant/wpa_supplicant.conf")}
         );
