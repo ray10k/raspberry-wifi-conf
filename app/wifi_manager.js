@@ -453,6 +453,7 @@ module.exports = function() {
         if (!fs.existsSync("/etc/wpa_supplicant/wpa_supplicant.conf"))
         {
             callback(null,retval);
+            return;
         }
         var reader = readline.createInterface(
             {input:fs.createReadStream("/etc/wpa_supplicant/wpa_supplicant.conf")}
