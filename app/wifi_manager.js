@@ -437,8 +437,34 @@ module.exports = function() {
 
             ], callback);
         });
-
     };
+
+    _forget_saved_wifi = function(callback) {
+        console.log("Forgetting saved wifi networks.");
+        fs.unlink("/etc/wpa_supplicant/wpa_supplicant.conf",function cb(err) {
+            callback(err);
+        });
+    };
+
+    _list_saved_wifi = function(callback) {
+        console.log("Listing saved wifi networks.");
+
+        var retval = [];
+        var reader = readline.createInterface(
+            {input:fs.createReadStream("/etc/wpa_supplicant/wpa_supplicant.conf")}
+        );
+        reader.on('line', function(line) {
+            if (line.includes("ssid="))
+            {
+                let left = line.indexOf('=')+1;
+                let rest = line.substring(left);
+                retval.push(rest);
+            }
+        });
+        reader.on('close', function() {
+            callback(null,retval);
+        });
+    }
 
     return {
         get_wifi_info:           _get_wifi_info,
@@ -454,5 +480,8 @@ module.exports = function() {
 
         enable_ap_mode:          _enable_ap_mode,
         enable_wifi_mode:        _enable_wifi_mode,
+
+        forget_saved_wifi:       _forget_saved_wifi,
+        list_saved_wifi:         _list_saved_wifi,
     };
 }

@@ -126,6 +126,20 @@ module.exports = function(wifi_manager, callback) {
         wifi_manager.wireless_interface_exists("wlan0", function(error,result) {
             log_error_send_success_with({exists:result},error,response)
         })
+    });
+
+    app.delete("/api/known_wifi", function(request, response) {
+        console.log('Server instructed to delete known wifi networks');
+        wifi_manager.forget_saved_wifi(function(error) {
+            log_error_send_success_with({},error,response);
+        })
+    });
+
+    app.get("/api/known_wifi", function(request, response) {
+        console.log('Server got known_wifi');
+        wifi_manager.list_saved_wifi(function(error,result) {
+            log_error_send_success_with({wifi_ssids:result},error,response);
+        })
     })
 
     // Listen on our server
