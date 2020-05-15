@@ -140,7 +140,14 @@ module.exports = function(wifi_manager, callback) {
         wifi_manager.list_saved_wifi(function(error,result) {
             log_error_send_success_with({wifi_ssids:result},error,response);
         })
-    })
+    });
+
+    app.patch("/api/known_wifi", function(request, response) {
+        console.log('Server instructed to Patch known_wifi');
+        wifi_manager.reorder_saved_wifi(function(error, result) {
+            log_error_send_success_with({wifi_ssids:result},error,response);
+        })
+    });
 
     // Listen on our server
     app.listen(config.server.port);

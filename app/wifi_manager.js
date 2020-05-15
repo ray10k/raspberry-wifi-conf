@@ -12,11 +12,15 @@ _.templateSettings = {
     evaluate :   /\{\[([\s\S]+?)\]\}/g
 };
 
-const network_block = _.template("\nnetwork={\n"+
-    "\tssid=\"{{ wifi_ssid }}\"\n"+
-    "\tpsk=\"{{ wifi_passcode }}\"\n"+
-    "\tkey_mgmt=WPA-PSK\n"+
-"}\n");
+const wpa_supplicant_header = "ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev" + NEWLINE +
+"update_config=1"+ NEWLINE +
+"country=NL" + NEWLINE;
+
+const network_block = _.template(NEWLINE + "network={"+ NEWLINE +
+    "\tssid=\"{{ wifi_ssid }}\""+ NEWLINE +
+    "\tpsk=\"{{ wifi_passcode }}\""+ NEWLINE + 
+    "\tkey_mgmt=WPA-PSK"+ NEWLINE +
+"}" + NEWLINE);
 
 // Helper function to write a given template to a file based on a given
 // context
@@ -59,7 +63,70 @@ module.exports = function() {
         "ap_addr":         /Access Point:\s([^\s]+)/,
         "ap_ssid":         /ESSID:\"([^\"]+)\"/,
         "unassociated":    /(unassociated)\s+Nick/,
-    },  last_wifi_info = null;
+    };
+
+    var _save_wpa_config = function(callback, wpa_supplicant_config) {
+        let to_write = "";
+        let retval = [];
+        wpa_supplicant_config.forEach((entry) => {
+            to_write += network_block({wifi_ssid:entry.ssid,wifi_passcode:entry.passcode});
+            retval.push({ssid:entry.ssid,passcode:entry.passcode});
+        })
+        fs.open("/etc/wpa_supplicant/wpa_supplicant.conf","w",0o644,(err,file_handle) => {
+            fs.write(file_handle,wpa_supplicant_header, (err) => {
+                if (!err)
+                {
+                    fs.write(file_handle,to_write, (err) => {
+                        callback(err,retval);
+                    });
+                }
+                else
+                callback(err);
+            });
+        });
+    }
+
+    var _load_wpa_config = function(callback) {
+        let retval = [];
+        let current_block;
+
+        if (!fs.existsSync("/etc/wpa_supplicant/wpa_supplicant.conf"))
+        {
+            callback(retval);
+            return;
+        }
+
+        let lines = fs.readFileSync("/etc/wpa_supplicant/wpa_supplicant.conf").toString().split(NEWLINE);
+        let clip = function(input) 
+        {
+            //strip off the first and last character of a string.
+            return input.substring(1,input.length - 1);
+        };
+
+        lines.forEach((line) => {
+            let clean_line = line.trim();
+            if (clean_line.includes("network="))
+            {
+                current_block = {ssid:"",passcode:""};
+            }
+            else if (clean_line.includes("ssid="))
+            {
+                let end = clean_line.indexOf("=") + 1;
+                current_block["ssid"] = clip(clean_line.substring(end));
+            }
+            else if (clean_line.includes("psk="))
+            {
+                let end = clean_line.indexOf("=") + 1;
+                current_block["passcode"] = clip(clean_line.substring(end));
+            }
+
+            if (clean_line.includes("}"))
+            {
+                retval.push(current_block);
+            }
+        });
+        callback(retval);
+    }
 
     // TODO: rpi-config-ap hardcoded, should derive from a constant
 
@@ -99,7 +166,6 @@ module.exports = function() {
                 run_command_and_set_fields("iwconfig wlan0", iwconfig_fields, next_step);
             },
         ], function(error) {
-            last_wifi_info = output;
             return callback(error, output);
         });
     },
@@ -316,64 +382,45 @@ module.exports = function() {
                     console.log('writing wpa_supplicant configuration...');
                     if (typeof connection_info.wifi_ssid == 'undefined' || connection_info.wifi_ssid == "")
                     {
-                        //Don't change WPA supplicant config.
-                        next_step();
-                    }
-                    //First: If no WPA supplicant configuration exists, copy in the default template.
-                    else if (!fs.existsSync("/etc/wpa_supplicant/wpa_supplicant.conf"))
-                    {
-                    write_template_to_file(
-                        "./assets/etc/wpa_supplicant/wpa_supplicant.conf.template",
-                        "/etc/wpa_supplicant/wpa_supplicant.conf",
-                        connection_info, next_step);
+                        if (!fs.existsSync("etc/wpa_supplicant/wpa_supplicant.conf"))
+                        //Path 1: No data provided, supplicant conf doesn't exist.
+                        //Save a blank supplicant conf file.
+                        {
+                            _save_wpa_config(next_step, []);
+                        }
+                        else
+                        //Path 2: No data provided, supplicant conf exists.
+                        //Move along.
+                        {
+                            next_step();
+                        }
                     }
                     else
                     {
-                        //Second: WPA supplicant configuration exists. Search the file for the given
-                        //ssid.
-                        let exists = false;
-                        let lines = [];
-                        let reader = readline.createInterface(
-                            {input:fs.createReadStream("/etc/wpa_supplicant/wpa_supplicant.conf")}
-                        );
-                        reader.on('line', function(line) {
-                            lines.push(line);
-                            if (line.includes('ssid="'+connection_info.wifi_ssid+'"'))
+                        _load_wpa_config((wpa_supplicant_config) =>
+                        {
+                            let index = 0;
+                            for (;index < wpa_supplicant_config.length; index++)
                             {
-                                exists = true;
+                                if (wpa_supplicant_config[index].ssid == connection_info.wifi_ssid)
+                                {
+                                    break;
+                                }
                             }
-                        });
 
-                        reader.on('close', function() {
-                            if (exists)
+                            if (index < wpa_supplicant_config.length)
                             {
-                                //Third: The ssid already exists in the file. Update the passkey.
-                                //Note: will break if the passkey isn't in the line immediately
-                                //after the one with the ssid.
-                                let i = -1;
-                                lines.forEach((value,index) => {
-                                    if (value.includes('ssid="'+connection_info.wifi_ssid+'"'))
-                                    {
-                                        i = index + 1;
-                                    }
-                                });
-                                lines[i] = "\tpsk=\""+connection_info.wifi_passcode+'"';
-                                let stream = fs.createWriteStream("/etc/wpa_supplicant/wpa_supplicant.conf");
-                                lines.forEach((line) => {
-                                    stream.write(line);
-                                    stream.write(NEWLINE);
-                                });
-                                stream.close();
+                                //Path 3: Data provided, SSID already known.
+                                //Update the passcode.
+                                wpa_supplicant_config[index].passcode = connection_info.wifi_passcode;
                             }
                             else
                             {
-                                //Fourth: the ssid doesn't exist in the file yet. Fill in a new
-                                //network block, and append it to the end of the file.
-                                let stream = fs.createWriteStream("/etc/wpa_supplicant/wpa_supplicant.conf",{flags:"a"});
-                                stream.write(network_block(connection_info));
-                                stream.close();
+                                //Path 4: Data provided, SSID not known yet.
+                                //Create a new entry for the new file.
+                                wpa_supplicant_config.push({ssid:connection_info.wifi_ssid, passcode: connection_info.wifi_passcode});
                             }
-                            next_step();
+                            _save_wpa_config(next_step,wpa_supplicant_config);
                         });
                     }
 				},
@@ -441,33 +488,54 @@ module.exports = function() {
 
     _forget_saved_wifi = function(callback) {
         console.log("Forgetting saved wifi networks.");
-        fs.unlink("/etc/wpa_supplicant/wpa_supplicant.conf",function cb(err) {
-            callback(err);
-        });
+        _save_wpa_config(callback,[]);
     };
 
     _list_saved_wifi = function(callback) {
         console.log("Listing saved wifi networks.");
 
-        var retval = [];
-        if (!fs.existsSync("/etc/wpa_supplicant/wpa_supplicant.conf"))
-        {
+        _load_wpa_config((entries) => {
+            let retval = [];
+            entries.forEach((entry) => {
+                retval.push(entry.ssid)
+            });
             callback(null,retval);
+        });
+    };
+
+    _reorder_saved_wifi = function(order_list,callback) {
+        console.log("Reordering saved wifi networks.");
+        if (!Array.isArray(order_list))
+        {
+            callback("ERROR: expected an array");
             return;
         }
-        var reader = readline.createInterface(
-            {input:fs.createReadStream("/etc/wpa_supplicant/wpa_supplicant.conf")}
-        );
-        reader.on('line', function(line) {
-            if (line.includes("ssid="))
-            {
-                let left = line.indexOf('=')+1;
-                let rest = line.substring(left);
-                retval.push(rest);
-            }
-        });
-        reader.on('close', function() {
-            callback(null,retval);
+        
+        _load_wpa_config((entries) => {
+            let new_list = [];
+            //Anyone order a roughly O(2n) algorithm?
+            order_list.forEach((entry) => {
+                //For each item in the order-list, check if it exists in the list of known
+                //networks. Disregard duplicates and unknown SSIDs.
+                let index = 0;
+                for (; index < entries.length; index++)
+                {
+                    if (entries[index].ssid == entry)
+                    {
+                        break;
+                    }
+                }
+
+                if (index < entries.length)
+                {
+                    new_list.push(entries[index]);
+                    entries.splice(index,1);
+                }
+            });
+            //Push the remaining known SSIDs to the end of the list so they're last to
+            //get connected to, and to ensure no SSIDs are accidentally forgotten.
+            new_list.push(entries);
+            _save_wpa_config(callback,new_list);
         });
     }
 
@@ -488,5 +556,6 @@ module.exports = function() {
 
         forget_saved_wifi:       _forget_saved_wifi,
         list_saved_wifi:         _list_saved_wifi,
+        reorder_saved_wifi:      _reorder_saved_wifi,
     };
 }
