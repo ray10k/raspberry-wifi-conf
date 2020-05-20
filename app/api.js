@@ -27,9 +27,22 @@ function log_error_send_success_with(success_obj, error, response) {
 module.exports = function(wifi_manager, callback) {
     var app = express();
 
-    var my_ip = config.ip_addr;
-    var cors_options = {
-        origin: [my_ip+":8080",my_ip+":80"]
+    var cors_delegate = (req, callback) => {
+        let origin_str = `${req.header("Origin")}`;
+        wifi_manager.get_wifi_info((err,result) => {
+            if (err)
+            {
+                callback(err,{origin:false});
+            }
+            else if (origin_str.includes(result.inet_addr))
+            {
+                callback(null,{origin:true});
+            }
+            else
+            {
+                callback(null,{orign:false});
+            }
+        });
     };
 
     // Configure the app
@@ -38,7 +51,7 @@ module.exports = function(wifi_manager, callback) {
     app.set("trust proxy", true);
 
     // Setup static routes to public assets
-    app.use(cors(cors_options));
+    app.use(cors(cors_delegate));
     app.use(express.static(path.join(__dirname, "public")));
     app.use(bodyParser.json());
 
@@ -135,7 +148,8 @@ module.exports = function(wifi_manager, callback) {
         })
     });
 
-    app.options("/api/known_wifi", cors(cors_options));
+    //Necessary to allow 'preflight' CORS requests.
+    app.options("/api/known_wifi", cors(cors_delegate));
 
     app.delete("/api/known_wifi", function(request, response) {
         console.log('Server instructed to delete known wifi networks');
