@@ -167,7 +167,8 @@ module.exports = function(wifi_manager, callback) {
 
     app.patch("/api/known_wifi", function(request, response) {
         console.log('Server instructed to Patch known_wifi');
-        wifi_manager.reorder_saved_wifi(function(error, result) {
+        let arg = request.body;
+        wifi_manager.reorder_saved_wifi(arg,function(error, result) {
             log_error_send_success_with({wifi_ssids:result},error,response);
         })
     });
