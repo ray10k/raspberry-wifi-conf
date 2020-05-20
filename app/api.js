@@ -4,6 +4,7 @@ var path       = require("path"),
     express    = require("express"),
     bodyParser = require('body-parser'),
     config     = require("../config.json"),
+    cors       = require('cors'),
     http_test  = config.http_test_only;
 
 // Helper function to log errors and send a generic status "SUCCESS"
@@ -26,12 +27,18 @@ function log_error_send_success_with(success_obj, error, response) {
 module.exports = function(wifi_manager, callback) {
     var app = express();
 
+    var my_ip = config.ip_addr;
+    var cors_options = {
+        origin: [my_ip+":8080",my_ip+":80"]
+    };
+
     // Configure the app
     app.set("view engine", "ejs");
     app.set("views", path.join(__dirname, "views"));
     app.set("trust proxy", true);
 
     // Setup static routes to public assets
+    app.use(cors(cors_options));
     app.use(express.static(path.join(__dirname, "public")));
     app.use(bodyParser.json());
 
@@ -127,6 +134,8 @@ module.exports = function(wifi_manager, callback) {
             log_error_send_success_with({exists:result},error,response)
         })
     });
+
+    app.options("/api/known_wifi", cors(cors_options));
 
     app.delete("/api/known_wifi", function(request, response) {
         console.log('Server instructed to delete known wifi networks');
