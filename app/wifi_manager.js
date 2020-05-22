@@ -536,11 +536,7 @@ module.exports = function() {
             //Push the remaining known SSIDs to the end of the list so they're last to
             //get connected to, and to ensure no SSIDs are accidentally forgotten.
             new_list = new_list.concat(entries);
-            let retval = [];
-            new_list.forEach((value) => {
-                retval.push(value.ssid);
-            })
-            _save_wpa_config(callback,retval);
+            _save_wpa_config(callback,new_list);
         });
     }
 

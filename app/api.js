@@ -169,7 +169,11 @@ module.exports = function(wifi_manager, callback) {
         console.log('Server instructed to Patch known_wifi');
         let arg = request.body;
         wifi_manager.reorder_saved_wifi(arg,function(error, result) {
-            log_error_send_success_with({wifi_ssids:result},error,response);
+            let retval = [];
+            result.forEach(element => {
+                retval.push(element.ssid);
+            });
+            log_error_send_success_with({wifi_ssids:retval},error,response);
         })
     });
 
