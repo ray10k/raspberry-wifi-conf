@@ -20,6 +20,7 @@ const network_block = _.template(NEWLINE + "network={"+ NEWLINE +
     "\tssid=\"{{ wifi_ssid }}\""+ NEWLINE +
     "\tpsk=\"{{ wifi_passcode }}\""+ NEWLINE + 
     "\tkey_mgmt=WPA-PSK"+ NEWLINE +
+    "\tpriority={{ network_priority }}" + NEWLINE +
 "}" + NEWLINE);
 
 // Helper function to write a given template to a file based on a given
@@ -68,9 +69,11 @@ module.exports = function() {
     var _save_wpa_config = function(callback, wpa_supplicant_config) {
         let to_write = "";
         let retval = [];
+        let priority = wpa_supplicant_config.length;
         wpa_supplicant_config.forEach((entry) => {
-            to_write += network_block({wifi_ssid:entry.ssid,wifi_passcode:entry.passcode});
+            to_write += network_block({wifi_ssid:entry.ssid,wifi_passcode:entry.passcode,network_priority:priority});
             retval.push({ssid:entry.ssid,passcode:entry.passcode});
+            priority--;
         });
 
         async.waterfall([
