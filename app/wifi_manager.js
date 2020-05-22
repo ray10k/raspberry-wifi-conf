@@ -71,21 +71,28 @@ module.exports = function() {
         wpa_supplicant_config.forEach((entry) => {
             to_write += network_block({wifi_ssid:entry.ssid,wifi_passcode:entry.passcode});
             retval.push({ssid:entry.ssid,passcode:entry.passcode});
-        })
-        fs.open("/etc/wpa_supplicant/wpa_supplicant.conf","w",0o644,(err,file_handle) => {
-            fs.write(file_handle,wpa_supplicant_header, (err) => {
-                if (!err)
-                {
-                    fs.write(file_handle,to_write, (err) => {
-                        fs.fsyncSync(file_handle);
-                        fs.close(file_handle,() => callback(err,retval)); 
-
-                    });
-                }
-                else
-                callback(err);
-            });
         });
+
+        async.waterfall([
+            function open_file(next_step) {
+                fs.open("/etc/wpa_supplicant/wpa_supplicant.conf","w",0o644,next_step);
+            },
+            function write_header(file_handle,next_step) {
+                fs.write(file_handle,wpa_supplicant_header,(err) => next_step(err,file_handle));
+            },
+            function write_networks(file_handle,next_step) {
+                fs.write(file_handle,to_write,(err) => next_step(err,file_handle));
+            },
+            function flush_file(file_handle,next_step) {
+                fs.fsync(file_handle,(err) => next_step(err,file_handle));
+            },
+            function close_file(file_handle,next_step) {
+                fs.close(file_handle,next_step);
+            },
+            function reboot(next_step) {
+                _reboot_wireless_network(config.wifi_interface,false,next_step);
+            }
+        ],callback);
     }
 
     var _load_wpa_config = function(callback) {
