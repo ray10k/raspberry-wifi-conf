@@ -92,7 +92,9 @@ module.exports = function() {
             function reboot(next_step) {
                 _reboot_wireless_network(config.wifi_interface,false,next_step);
             }
-        ],callback);
+        ],function result(err, result) {
+            callback(err,retval);
+        });
     }
 
     var _load_wpa_config = function(callback) {
