@@ -94,6 +94,9 @@ module.exports = function() {
             },
             function reboot(next_step) {
                 _reboot_wireless_network(config.wifi_interface,false,next_step);
+            },
+            function reconfigure_wifi(next_step) {
+                exec(`wpa_cli -i ${config.wifi_interface} reconfigure`,next_step)
             }
         ],function result(err, result) {
             callback(err,retval);
