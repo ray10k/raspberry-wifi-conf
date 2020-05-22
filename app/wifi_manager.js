@@ -77,8 +77,8 @@ module.exports = function() {
                 if (!err)
                 {
                     fs.write(file_handle,to_write, (err) => {
-                        fs.close(file_handle,() => {}); //blindly close file handle and hope for the best.
-                        callback(err,retval);
+                        fs.close(file_handle,() => callback(err,retval)); 
+
                     });
                 }
                 else
