@@ -77,6 +77,7 @@ module.exports = function() {
                 if (!err)
                 {
                     fs.write(file_handle,to_write, (err) => {
+                        fs.fsyncSync(file_handle);
                         fs.close(file_handle,() => callback(err,retval)); 
 
                     });
