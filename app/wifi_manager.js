@@ -215,9 +215,10 @@ module.exports = function() {
                 }
             },
             function reconfigure_wifi(next_step) {
-                exec(`wpa_cli -i ${wlan_iface} reconfigure`,
+                exec(`sudo wpa_cli -i ${wlan_iface} reconfigure`,
                 function(error, stdout, stderr) {
-                    if (!error) console.log(`Interface ${wlan_iface} reconfigured successfully.`)
+                    if (!error) console.log(`Interface ${wlan_iface} reconfigured successfully.`);
+                    next_step();
                 })
             }
         ], callback);
