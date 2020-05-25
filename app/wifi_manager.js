@@ -527,7 +527,7 @@ module.exports = function() {
         
         _load_wpa_config((entries) => {
             let new_list = [];
-            //Anyone order a roughly O(2n) algorithm?
+            //Anyone order a roughly O(n^2) algorithm?
             order_list.forEach((entry) => {
                 //For each item in the order-list, check if it exists in the list of known
                 //networks. Disregard duplicates and unknown SSIDs.
@@ -549,7 +549,7 @@ module.exports = function() {
             //Push the remaining known SSIDs to the end of the list so they're last to
             //get connected to, and to ensure no SSIDs are accidentally forgotten.
             new_list = new_list.concat(entries);
-            _save_wpa_config(callback,new_list);
+            _save_wpa_config((err,result) => {_reboot_wireless_network(config.wifi_interface,false,callback)},new_list);
         });
     }
 
