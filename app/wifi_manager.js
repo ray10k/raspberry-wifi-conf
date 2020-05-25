@@ -67,6 +67,13 @@ module.exports = function() {
     };
 
     var _save_wpa_config = function(callback, wpa_supplicant_config) {
+        if (typeof wpa_supplicant_config == 'undefined' || !Array.isArray(wpa_supplicant_config))
+        {
+            //Don't bother doing anything with an empty input.
+            callback(null,[]);
+            return;
+        }
+
         let to_write = "";
         let retval = [];
         let priority = wpa_supplicant_config.length;
@@ -91,13 +98,7 @@ module.exports = function() {
             },
             function close_file(file_handle,next_step) {
                 fs.close(file_handle,next_step);
-            },
-            function reboot(next_step) {
-                _reboot_wireless_network(config.wifi_interface,false,next_step);
-            },
-            function reconfigure_wifi(next_step) {
-                exec(`wpa_cli -i ${config.wifi_interface} reconfigure`,next_step)
-            }
+            }            
         ],function result(err, result) {
             callback(err,retval);
         });
@@ -213,6 +214,12 @@ module.exports = function() {
                     });
                 }
             },
+            function reconfigure_wifi(next_step) {
+                exec(`wpa_cli -i ${wlan_iface} reconfigure`,
+                function(error, stdout, stderr) {
+                    if (!error) console.log(`Interface ${wlan_iface} reconfigured successfully.`)
+                })
+            }
         ], callback);
     },
 
@@ -399,18 +406,7 @@ module.exports = function() {
                     console.log('writing wpa_supplicant configuration...');
                     if (typeof connection_info.wifi_ssid == 'undefined' || connection_info.wifi_ssid == "")
                     {
-                        if (!fs.existsSync("etc/wpa_supplicant/wpa_supplicant.conf"))
-                        //Path 1: No data provided, supplicant conf doesn't exist.
-                        //Save a blank supplicant conf file.
-                        {
-                            _save_wpa_config(next_step, []);
-                        }
-                        else
-                        //Path 2: No data provided, supplicant conf exists.
-                        //Move along.
-                        {
-                            next_step();
-                        }
+                        next_step();
                     }
                     else
                     {
