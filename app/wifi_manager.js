@@ -549,7 +549,7 @@ module.exports = function() {
             //Push the remaining known SSIDs to the end of the list so they're last to
             //get connected to, and to ensure no SSIDs are accidentally forgotten.
             new_list = new_list.concat(entries);
-            _save_wpa_config((err,result) => {_reboot_wireless_network(config.wifi_interface,false,callback)},new_list);
+            _save_wpa_config((err,result) => {_reboot_wireless_network(config.wifi_interface,false,() => callback(err,result))},new_list);
         });
     }
 
